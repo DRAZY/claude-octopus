@@ -1,3 +1,12 @@
+## [9.2.1] - 2026-03-16
+
+### Fixed
+
+- **jq parse error in `code-review`**: Bash `${1:-{}}` parameter expansion appended an extra `}` to the JSON profile string, causing jq parse errors. Fixed by quoting the default value. (#172)
+- **"Argument list too long" with large diffs**: The review pipeline passed prompts (including embedded diffs) as CLI arguments, exceeding `ARG_MAX` for PRs with >2000 lines. All agent types now use stdin-based prompt delivery. (#173)
+
+---
+
 ## [9.2.0] - 2026-03-15
 
 ### Changed
