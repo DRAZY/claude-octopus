@@ -162,7 +162,30 @@ Available profiles:
 - **standard** — All hooks except expensive review/security gates (default)
 - **strict** — All hooks enabled including quality and security gates
 
-Override: Set `OCTO_HOOK_PROFILE=<profile>` or `OCTO_DISABLED_HOOKS=hook1,hook2` to fine-tune which hooks run.
+Override: Set `OCTO_PROFILE=budget|balanced|quality` or `OCTO_DISABLED_HOOKS=hook1,hook2` to fine-tune. Legacy `OCTO_HOOK_PROFILE` still works (minimal→budget, standard→balanced, strict→quality).
+
+---
+
+## Intensity Profile
+
+The doctor reports the active intensity profile — a single knob controlling hook gating, model selection, phase skipping, and context verbosity.
+
+### What the Doctor Checks
+
+- **Current profile**: `OCTO_PROFILE` value (budget/balanced/quality, default: balanced)
+- **Profile source**: env var, legacy `OCTO_HOOK_PROFILE`, or auto-selected from intent
+- **Hook gating**: which hooks are enabled/disabled at this profile level
+- **Model hints**: which model (sonnet/opus) is recommended for each phase
+- **Context verbosity**: compressed/standard/full
+
+### Profile Summary
+
+| Dimension | budget | balanced | quality |
+|-----------|--------|----------|---------|
+| Hooks | essential only | standard (no quality gates) | all hooks |
+| Models | Sonnet everywhere | Sonnet + Opus for synthesis | Opus for most phases |
+| Phases | Skip discover if context given | Skip re-discovery | All phases run |
+| Context | Compressed | Standard | Full inlining |
 
 ---
 
