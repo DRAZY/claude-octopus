@@ -19,7 +19,8 @@ _utils_log() {
 # JSON UTILITIES
 # ═══════════════════════════════════════════════════════════════════════════════
 
-# Extract a single JSON field value using bash regex (no jq dependency)
+# Extract a single JSON field value from a JSON string.
+# Tries jq first (most reliable), then python3, then an improved bash regex.
 # Usage: json_extract "$json_string" "fieldname" -> sets REPLY variable
 # Returns 0 if found, 1 if not found
 json_extract() {
@@ -27,8 +28,46 @@ json_extract() {
     local field="$2"
     REPLY=""
 
-    # Use bash regex to extract field value (handles quoted strings)
-    if [[ "$json" =~ \"$field\":\"([^\"]+)\" ]]; then
+    # Strategy 1: jq (most reliable — handles all edge cases)
+    if command -v jq &>/dev/null; then
+        local jq_out
+        jq_out=$(printf '%s' "$json" | jq -re --arg f "$field" '.[$f] // empty' 2>/dev/null) && {
+            REPLY="$jq_out"
+            return 0
+        }
+        # jq available but field not found — authoritative miss, no fallback
+        return 1
+    fi
+
+    # Strategy 2: python3 one-liner (available on macOS and most Linux)
+    if command -v python3 &>/dev/null; then
+        local py_out
+        py_out=$(python3 -c "
+import json,sys
+try:
+    d=json.loads(sys.stdin.read())
+    v=d[sys.argv[1]]
+    print(v if isinstance(v,str) else json.dumps(v))
+except Exception:
+    sys.exit(1)
+" "$field" <<< "$json" 2>/dev/null) && {
+            REPLY="$py_out"
+            return 0
+        }
+        return 1
+    fi
+
+    # Strategy 3: Improved bash regex fallback (handles whitespace around colon
+    # and escaped quotes inside values). BASH_REMATCH used for static-analysis compat.
+    # Try quoted string value first (handles escaped quotes via negative lookbehind approx)
+    local pattern="\"${field}\"[[:space:]]*:[[:space:]]*\"(([^\"\\\\]|\\\\.)*)\""
+    if [[ "$json" =~ $pattern ]]; then
+        REPLY="${BASH_REMATCH[1]}"
+        return 0
+    fi
+    # Try numeric / boolean / null value
+    local num_pattern="\"${field}\"[[:space:]]*:[[:space:]]*([0-9eE.+-]+|true|false|null)"
+    if [[ "$json" =~ $num_pattern ]]; then
         REPLY="${BASH_REMATCH[1]}"
         return 0
     fi

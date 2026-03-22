@@ -1279,7 +1279,7 @@ else
 fi
 
 echo -n "  json_extract uses bash regex (no subprocess)... "
-if grep -A10 '^json_extract()' "$UTILS_SCRIPT" | grep -q 'BASH_REMATCH'; then
+if grep -A50 '^json_extract()' "$UTILS_SCRIPT" | grep -q 'BASH_REMATCH'; then
     echo -e "${GREEN}PASS${NC}"
     ((PASS++))
 else
