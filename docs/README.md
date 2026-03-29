@@ -1,6 +1,6 @@
 # Documentation Guide
 
-Start here if you are not sure which doc you need.
+**New here?** Start with the [plugin overview](../.claude-plugin/README.md) for a quick orientation, then come back here for details.
 
 ## Core References
 
